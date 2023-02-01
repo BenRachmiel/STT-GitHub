@@ -16,7 +16,7 @@ def initialize_new_data_json(filepath):
         json.dump(data, fp)
 
 
-def start_visualization(filepath='visualization_data.json', update_time_seconds=10, model_name='No Model Name Provided'):
+def start_visualization(filepath, update_time_seconds=10, model_name='No Model Name Provided'):
     initialize_new_data_json(filepath)
 
     server_process = mp.Process(target=gf.dash_server, args=(filepath, update_time_seconds, model_name))

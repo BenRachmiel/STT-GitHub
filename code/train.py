@@ -1,14 +1,11 @@
 import torch
 import torch.nn.functional as F
-from torch.utils.tensorboard import SummaryWriter
 from utils import cer, wer, TextTransform
 import numpy as np
 import json
 
 
 class TrainSTT:
-    def __init__(self):
-        self.writer = SummaryWriter()
 
     @staticmethod
     def greedy_decoder(output, labels, label_lengths, blank_label=29, collapse_repeated=True):
@@ -68,9 +65,6 @@ class TrainSTT:
                 running_wer += wer(decoded_targets[j], decoded_preds[j])
         print(f'\t\ttarget:\t{decoded_targets[-1]}')
         print(f'\t\tprediction:\t{decoded_preds[-1]}')
-        self.writer.add_scalar("train loss", running_loss / batch_idx, epoch)
-        self.writer.add_scalar("train CER", running_cer / len(train_loader), epoch)
-        self.writer.add_scalar("train WER", running_wer / len(train_loader), epoch)
         return
 
     def test(
@@ -81,7 +75,7 @@ class TrainSTT:
             criterion,
             epoch,
             model_type,
-            filepath='visualization_data.json'):
+            filepath):
 
         model.eval()
         running_loss = 0.0
@@ -111,9 +105,6 @@ class TrainSTT:
                     running_wer += wer(decoded_targets[j], decoded_preds[j])
         print(f'\t\ttarget:\t{decoded_targets[-1]}')
         print(f'\t\tprediction:\t{decoded_preds[-1]}')
-        self.writer.add_scalar("test loss", running_loss / batch_idx, epoch)
-        self.writer.add_scalar("test CER", running_cer / len(test_loader), epoch)
-        self.writer.add_scalar("test WER", running_wer / len(test_loader), epoch)
 
         # for visualization testing, TODO : move to separate function
         with open(filepath) as json_file:

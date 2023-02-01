@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -9,17 +10,28 @@ import arg_parse_setup
 import torchaudio
 import start_visualization_server
 from warning_suppression import warning_suppression
+import datetime
 
 
-def main(passed_args):
+def filepath_maker(filepath):
 
+    now = datetime.datetime.now()
+    if not os.path.exists(f'{filepath}/{now.year}_{now.month}_{now.day}/{args.model}/'):
+        os.makedirs(f'{filepath}/{now.year}_{now.month}_{now.day}/{args.model}/')
+
+    metric_json_filepath = f'{filepath}/{now.year}_{now.month}_{now.day}/{args.model}/{now.hour}_{now.minute}.json'
+
+    return metric_json_filepath
+
+
+def main(passed_args, metric_filepath):
     # TODO: Add validation to training
 
     input_type = input_type_generator(passed_args.model)
 
     train_loader, test_loader = get_data(
-        train_json_path='/home/yakir/PycharmProjects/stt-plus-visualization/venv/dataset_collection/kerenor_train.json',
-        valid_json_path='/home/yakir/PycharmProjects/stt-plus-visualization/venv/dataset_collection/kerenor_valid.json',
+        train_json_path='../data/keren_or/kerenor_train.json',
+        valid_json_path='../data/keren_or/kerenor_valid.json',
         batch_size=passed_args.batch_size,
         input_type=input_type)
 
@@ -53,17 +65,15 @@ def main(passed_args):
 
     best_wer = float('inf')
 
-    epoch_array = np.array(range(passed_args.epochs))
-    wer_array = np.array([])
     for epoch in range(passed_args.epochs):
         print(f'\n\nEpoch[{epoch + 1}/{passed_args.epochs}]')
         trainer.train(model, device, train_loader, criterion, optimizer, scheduler, epoch, passed_args.model)
-        wer_test = trainer.test(model, device, test_loader, criterion, epoch, passed_args.model)
-        np.append(wer_array, wer_test)  # for plotting
+        wer_test = trainer.test(model, device, test_loader, criterion, epoch, passed_args.model, metric_filepath)
         if wer_test < best_wer:
             best_wer = wer_test
             print(f'saving model with wer = {wer_test}')
-            torch.save({'model_state_dict': model.state_dict()}, f"{passed_args.model}_ko_22_08_2022_{num_parameters}.pt")
+            torch.save({'model_state_dict': model.state_dict()},
+                       f"{passed_args.model}_ko_22_08_2022_{num_parameters}.pt")
 
 
 if __name__ == '__main__':
@@ -71,10 +81,12 @@ if __name__ == '__main__':
 
     warning_suppression()
 
+    desired_json_filepath = filepath_maker(f'../runs')
+
     start_visualization_server.start_visualization(
-        filepath='visualization_data.json',
+        filepath=desired_json_filepath,
         update_time_seconds=10,
         model_name=args.model
     )
 
-    main(args)
+    main(args, desired_json_filepath)

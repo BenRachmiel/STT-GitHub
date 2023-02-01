@@ -5,6 +5,7 @@ import torchaudio
 import random
 import json
 from scipy.io import wavfile
+import sys
 
 
 def _levenshtein_distance(ref, hyp):
@@ -382,6 +383,7 @@ def get_data(train_json_path, valid_json_path, batch_size, input_type='melspectr
 
 
 def input_type_generator(model):
+    input_type = 'ERROR'
     if model == 'Wav2Letter':
         input_type = 'MFCC'
     if model == 'DeepSpeech':

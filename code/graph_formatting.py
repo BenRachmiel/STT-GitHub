@@ -3,8 +3,8 @@ import plotly.graph_objects as go
 
 def loss(data, left_margin=100, right_margin=100, top_margin=0, bottom_margin=200):
     loss_graph = go.Figure()
-    loss_graph.add_trace(go.Scatter(x=data['Epoch'], y=data['Loss'], name='Loss'))
-    loss_graph.add_trace(go.Scatter(x=data['Epoch'], y=data['Loss2'], name='Loss2'))
+    loss_graph.add_trace(go.Scatter(x=data['Epoch'], y=data['Loss'], name='Loss - Training'))
+    loss_graph.add_trace(go.Scatter(x=data['Epoch_valid'], y=data['Loss_valid'], name='Loss2 - Testing'))
     loss_graph.update_layout({
         'plot_bgcolor': 'rgba(0,0,0,0)',
         'paper_bgcolor': 'rgba(0,0,0,0)'},
@@ -25,7 +25,7 @@ def loss(data, left_margin=100, right_margin=100, top_margin=0, bottom_margin=20
             yanchor="top",
             y=0.99,
             xanchor="left",
-            x=0.01
+            x=0.99
         ),
         legend_bgcolor='#808080',
         legend_bordercolor='#FFFFFF',

@@ -2,7 +2,6 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
 from utils import get_data, input_type_generator
 from deepspeech.model import DeepSpeech
 from train import TrainSTT
@@ -30,8 +29,8 @@ def main(passed_args, metric_filepath):
     input_type = input_type_generator(passed_args.model)
 
     train_loader, test_loader = get_data(
-        train_json_path='../data/keren_or/kerenor_train.json',
-        valid_json_path='../data/keren_or/kerenor_valid.json',
+        train_json_path='/stt/dataset_collection/keren_or/kerenor_train.json',
+        valid_json_path='/stt/dataset_collection/keren_or/kerenor_valid.json',
         batch_size=passed_args.batch_size,
         input_type=input_type)
 
@@ -67,7 +66,7 @@ def main(passed_args, metric_filepath):
 
     for epoch in range(passed_args.epochs):
         print(f'\n\nEpoch[{epoch + 1}/{passed_args.epochs}]')
-        trainer.train(model, device, train_loader, criterion, optimizer, scheduler, epoch, passed_args.model)
+        trainer.train(model, device, train_loader, criterion, optimizer, scheduler, epoch, passed_args.model, metric_filepath, passed_args.batch_size)
         wer_test = trainer.test(model, device, test_loader, criterion, epoch, passed_args.model, metric_filepath)
         if wer_test < best_wer:
             best_wer = wer_test
@@ -81,7 +80,7 @@ if __name__ == '__main__':
 
     warning_suppression()
 
-    desired_json_filepath = filepath_maker(f'../runs')
+    desired_json_filepath = filepath_maker(f'../dataset_collection')
 
     start_visualization_server.start_visualization(
         filepath=desired_json_filepath,

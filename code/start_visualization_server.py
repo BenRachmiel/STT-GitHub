@@ -6,10 +6,13 @@ import json
 def initialize_new_data_json(filepath):
     data = {
         'Epoch': [],
+        'Epoch_valid': [],
         'WER': [],
+        'WER_valid': [],
         'CER': [],
+        'CER_valid': [],
         'Loss': [],
-        'Loss2': []
+        'Loss_valid': []
     }
     with open(filepath, 'w') as fp:
         fp.seek(0)

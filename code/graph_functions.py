@@ -7,7 +7,7 @@ import graph_formatting
 
 
 def dash_server(filepath, update_time_seconds=10, model_name='No Model Name Provided'):
-    app = dash.Dash(__name__, update_title=None, assets_folder='/home/yakir/PycharmProjects/plotly_testing/assets')
+    app = dash.Dash(__name__, update_title=None, assets_folder='/stt/code/assets')
 
     @app.callback(dash.dependencies.Output('server-time', 'children'),
                   [dash.dependencies.Input('interval-server-time', 'n_intervals')])

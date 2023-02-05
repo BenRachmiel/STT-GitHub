@@ -348,9 +348,7 @@ class TextTransform:
 
 def normalize_int16(signal):
     signal = signal.astype(np.float32)
-    max_val = 2 ** 15 - 1
-    min_val = -2 ** 15
-    return 2 * ((signal - max_val) / (max_val - min_val + 1e-3)) + 1
+    return signal / 32768.0
 
 
 def get_data(train_json_path, valid_json_path, batch_size, input_type='melspectrogram'):
@@ -388,5 +386,4 @@ def input_type_generator(model):
         input_type = 'MFCC'
     if model == 'DeepSpeech':
         input_type = 'melspectrogram'
-
     return input_type

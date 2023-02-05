@@ -7,9 +7,9 @@ def parse_args():
     parser.add_argument(
         "--model",
         metavar="M",
-        default="Wav2Letter",
         choices=["DeepSpeech", "Wav2Letter"],
         help="Input type of model",
+        default="DeepSpeech",
     )
     parser.add_argument(
         "--learning-rate",
@@ -20,7 +20,7 @@ def parse_args():
     )
     parser.add_argument(
         "--batch-size",
-        default=2,
+        default=32,
         type=int,
         metavar="N",
         help="Batch Size"

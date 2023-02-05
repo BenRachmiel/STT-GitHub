@@ -32,18 +32,21 @@ class TrainSTT:
               optimizer,
               scheduler,
               epoch,
-              model_type):
-
+              model_type,
+              filepath,
+              batch_size):
+        
+        with open(filepath) as json_file:
+            json_data = json.load(json_file)
         model.train()
         running_loss = 0.0
-        running_cer = 0.0
-        running_wer = 0.0
         print(f'\tTRAIN')
         for batch_idx, data in enumerate(train_loader):
+            running_cer = 0.0
+            running_wer = 0.0
             spectrograms, labels, input_lengths, label_lengths = data
             spectrograms, labels = spectrograms.to(device), labels.to(device)
 
-            # TODO clean this up
             optimizer.zero_grad()
             if model_type == 'Wav2Letter':
                 spectrograms = np.squeeze(spectrograms, axis=1)
@@ -54,7 +57,8 @@ class TrainSTT:
                 output = output.transpose(0, 2)
 
             loss = criterion(output, labels, input_lengths, label_lengths)
-            running_loss += loss.detach().cpu().numpy()
+            batch_loss = loss.detach().cpu().numpy()
+            running_loss += batch_loss
             loss.backward()
             optimizer.step()
             scheduler.step()
@@ -63,6 +67,13 @@ class TrainSTT:
             for j in range(len(decoded_preds)):
                 running_cer += cer(decoded_targets[j], decoded_preds[j])
                 running_wer += wer(decoded_targets[j], decoded_preds[j])
+            json_data['Epoch'].append(round(float(epoch)+(float(batch_idx*batch_size)/len(train_loader)),3))
+            json_data['Loss'].append(round(float(batch_loss),3))
+            json_data['WER'].append(round(running_wer/batch_size,3))
+            json_data['CER'].append(round(running_cer/batch_size,3))
+        with open(filepath, 'w') as fp:
+            fp.seek(0)
+            json.dump(json_data, fp)
         print(f'\t\ttarget:\t{decoded_targets[-1]}')
         print(f'\t\tprediction:\t{decoded_preds[-1]}')
         return
@@ -109,11 +120,10 @@ class TrainSTT:
         # for visualization testing, TODO : move to separate function
         with open(filepath) as json_file:
             data = json.load(json_file)
-        data['Epoch'].append(epoch)
-        data['Loss'].append(running_loss / batch_idx)
-        data['Loss2'].append(running_loss / batch_idx)
-        data['WER'].append(running_wer / len(test_loader))
-        data['CER'].append(running_cer / len(test_loader))
+        data['Epoch_valid'].append(epoch+1)
+        data['Loss_valid'].append(running_loss / batch_idx)
+        data['WER_valid'].append(running_wer / len(test_loader))
+        data['CER_valid'].append(running_cer / len(test_loader))
         with open(filepath, 'w') as fp:
             fp.seek(0)
             json.dump(data, fp)

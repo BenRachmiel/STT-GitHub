@@ -78,7 +78,7 @@ class TrainSTT:
         print(f'\t\tprediction:\t{decoded_preds[-1]}')
         return
 
-    def test(
+    def validate(
             self,
             model,
             device,

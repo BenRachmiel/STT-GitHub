@@ -35,14 +35,26 @@ def parse_args():
     parser.add_argument(
         "--metric-filepath",
         metavar="MFP",
-        required=True,
+        default='../metrics',
         help="Folder in which metrics are to be saved",
     )
     parser.add_argument(
         "--model-save-filepath",
         metavar="MSP",
-        required=True,
+        default='../models',
         help="Folder in which models are to be saved",
+    )
+    parser.add_argument(
+        "--train-data-json-path",
+        metavar="TDJP",
+        required=True,
+        help="Filepath to training json",
+    )
+    parser.add_argument(
+        "--valid-data-json-path",
+        metavar="VDJP",
+        required=True,
+        help="Filepath to validation json",
     )
 
     return parser.parse_args()

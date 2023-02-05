@@ -8,6 +8,7 @@ from scipy.io import wavfile
 from deepspeech.model import DeepSpeech
 import datetime
 import os
+import torch.optim as optim
 
 
 def _levenshtein_distance(ref, hyp):
@@ -424,18 +425,37 @@ def model_definer(model_name, device):
             stride=2,
             dropout=0.1
         ).to(device)
-    if model_name == 'Wav2Letter':
+    elif model_name == 'Wav2Letter':
         model = torchaudio.models.Wav2Letter(input_type='mfcc', num_features=128, num_classes=30).to(device)
+    else:
+        raise Exception("Model name not recognized")
 
     return model
 
 
-def metric_json_filepath_maker(args):
+def filepath_maker(metric_filepath, model_save_filepath, model):
+    """
+    Creates directories for saving data if directories do not exist, and returns time @ start of run
+    :param metric_filepath: path to folder metrics should be saved in
+    :param model_save_filepath: path to folder model parameters should be saved in
+    :param model: string containing name of model
+    :return:
+    """
     now = datetime.datetime.now()
-    if not os.path.exists(f'{args.metric_filepath}/{now.year}_{now.month}_{now.day}/{args.model}/'):
-        os.makedirs(f'{args.metric_filepath}/{now.year}_{now.month}_{now.day}/{args.model}/')
 
-    metric_json_filepath = f'{args.metric_filepath}/{now.year}_{now.month}_{now.day}/{args.model}' + \
-        f'/run_{now.hour}_{now.minute}_metrics.json'
+    metric_folder = f'{metric_filepath}/{now.year}_{now.month}_{now.day}/{model}/'
+    if not os.path.exists(metric_folder):
+        os.makedirs(metric_folder)
 
-    return metric_json_filepath
+    if not os.path.exists(model_save_filepath):
+        os.makedirs(model_save_filepath)
+
+    return now
+
+def optimizer_chooser(optimizer_name, model, learning_rate):
+    if optimizer_name == 'AdamW':
+        optimizer = optim.AdamW(model.parameters(), learning_rate)
+    else:
+        raise Exception("Optimizer name not recognized")
+
+    return optimizer

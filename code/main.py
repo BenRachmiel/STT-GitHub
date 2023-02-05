@@ -1,30 +1,14 @@
-import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from utils import get_data, input_type_generator
-from deepspeech.model import DeepSpeech
+from utils import get_data, input_type_generator, metric_best_comparator, model_definer, metric_json_filepath_maker
 from train import TrainSTT
 import arg_parse_setup
-import torchaudio
 import start_visualization_server
 from warning_suppression import warning_suppression
-import datetime
-
-
-def filepath_maker(filepath):
-
-    now = datetime.datetime.now()
-    if not os.path.exists(f'{filepath}/{now.year}_{now.month}_{now.day}/{args.model}/'):
-        os.makedirs(f'{filepath}/{now.year}_{now.month}_{now.day}/{args.model}/')
-
-    metric_json_filepath = f'{filepath}/{now.year}_{now.month}_{now.day}/{args.model}/{now.hour}_{now.minute}.json'
-
-    return metric_json_filepath
 
 
 def main(passed_args, metric_filepath):
-    # TODO: Add validation to training
 
     input_type = input_type_generator(passed_args.model)
 
@@ -36,18 +20,7 @@ def main(passed_args, metric_filepath):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    if passed_args.model == 'DeepSpeech':
-        model = DeepSpeech(
-            n_cnn_layers=3,
-            n_rnn_layers=5,
-            rnn_dim=512,
-            n_class=30,
-            n_feats=128,
-            stride=2,
-            dropout=0.1
-        ).to(device)
-    if passed_args.model == 'Wav2Letter':
-        model = torchaudio.models.Wav2Letter(input_type='mfcc', num_features=128, num_classes=30).to(device)
+    model = model_definer(passed_args.model, device)
 
     num_parameters = sum([param.nelement() for param in model.parameters()])
     print(f'Running {passed_args.model} with {num_parameters} parameters')
@@ -66,26 +39,23 @@ def main(passed_args, metric_filepath):
 
     for epoch in range(passed_args.epochs):
         print(f'\n\nEpoch[{epoch + 1}/{passed_args.epochs}]')
-        trainer.train(model, device, train_loader, criterion, optimizer, scheduler, epoch, passed_args.model, metric_filepath, passed_args.batch_size)
+        trainer.train(model, device, train_loader, criterion, optimizer, scheduler, epoch, passed_args.model,
+                      metric_filepath, passed_args.batch_size)
         wer_test = trainer.test(model, device, test_loader, criterion, epoch, passed_args.model, metric_filepath)
-        if wer_test < best_wer:
-            best_wer = wer_test
-            print(f'saving model with wer = {wer_test}')
-            torch.save({'model_state_dict': model.state_dict()},
-                       f"{passed_args.model}_ko_22_08_2022_{num_parameters}.pt")
+
+        best_wer = metric_best_comparator(wer_test, best_wer, 'WER', model, passed_args.model, num_parameters,
+                                          args.model_save_path)
 
 
 if __name__ == '__main__':
     args = arg_parse_setup.parse_args()
-
     warning_suppression()
 
-    desired_json_filepath = filepath_maker(f'../dataset_collection')
-
+    desired_metric_json_filepath = metric_json_filepath_maker(args)
     start_visualization_server.start_visualization(
-        filepath=desired_json_filepath,
+        filepath=desired_metric_json_filepath,
         update_time_seconds=10,
         model_name=args.model
     )
 
-    main(args, desired_json_filepath)
+    main(args, desired_metric_json_filepath)

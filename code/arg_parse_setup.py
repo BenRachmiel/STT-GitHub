@@ -33,11 +33,16 @@ def parse_args():
         help="Number of total epochs to run",
     )
     parser.add_argument(
-        "--filepath",
-        metavar="FP",
-        default="visualization_data.json",
-        help="Filepath for data processing",
+        "--metric-filepath",
+        metavar="MFP",
+        required=True,
+        help="Folder in which metrics are to be saved",
+    )
+    parser.add_argument(
+        "--model-save-filepath",
+        metavar="MSP",
+        required=True,
+        help="Folder in which models are to be saved",
     )
 
     return parser.parse_args()
-

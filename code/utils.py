@@ -5,7 +5,9 @@ import torchaudio
 import random
 import json
 from scipy.io import wavfile
-import sys
+from deepspeech.model import DeepSpeech
+import datetime
+import os
 
 
 def _levenshtein_distance(ref, hyp):
@@ -387,3 +389,53 @@ def input_type_generator(model):
     if model == 'DeepSpeech':
         input_type = 'melspectrogram'
     return input_type
+
+
+def metric_best_comparator(current_metric, best_metric, metric_name, model,
+                           model_name, num_parameters, model_save_path):
+    """
+    :param current_metric: figure to be compared to all-time high
+    :param best_metric: all-time high of given metric
+    :param metric_name: name, as a string, of the metric for display
+    :param model: model object, torch neural network
+    :param model_name: model name, as a string
+    :param num_parameters: number of parameters, for file-naming
+    :param model_save_path: string of folder where model .pt should be saved
+    :return: higher of two passed metrics (best or current), for assignment in higher scope
+    """
+    if current_metric < best_metric:
+        print(f'saving model with {metric_name} = {current_metric}')
+        torch.save({'model_state_dict': model.state_dict()},
+                   f"{model_save_path}/{model_name}_{datetime.datetime.now().month}_{datetime.datetime.now().day}" +
+                   f"_{num_parameters}.pt")
+        return current_metric
+    else:
+        return best_metric
+
+
+def model_definer(model_name, device):
+    if model_name == 'DeepSpeech':
+        model = DeepSpeech(
+            n_cnn_layers=3,
+            n_rnn_layers=5,
+            rnn_dim=512,
+            n_class=30,
+            n_feats=128,
+            stride=2,
+            dropout=0.1
+        ).to(device)
+    if model_name == 'Wav2Letter':
+        model = torchaudio.models.Wav2Letter(input_type='mfcc', num_features=128, num_classes=30).to(device)
+
+    return model
+
+
+def metric_json_filepath_maker(args):
+    now = datetime.datetime.now()
+    if not os.path.exists(f'{args.metric_filepath}/{now.year}_{now.month}_{now.day}/{args.model}/'):
+        os.makedirs(f'{args.metric_filepath}/{now.year}_{now.month}_{now.day}/{args.model}/')
+
+    metric_json_filepath = f'{args.metric_filepath}/{now.year}_{now.month}_{now.day}/{args.model}' + \
+        f'/run_{now.hour}_{now.minute}_metrics.json'
+
+    return metric_json_filepath

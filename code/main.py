@@ -37,14 +37,14 @@ def main(passed_args, start_time):
     trainer = TrainSTT()
 
     best_wer = float('inf')
-    path_to_metric_json = passed_args.metric_filepath + f'/{passed_args.model}_run_{start_time.hour}_{start_time.minute}_metrics.json'
-    # TODO Progress bar for epochs
+    path_to_metric_json = passed_args.metric_filepath + \
+                          f'/{passed_args.model}_run_{start_time.hour}_{start_time.minute}_metrics.json'
+
     for epoch in range(passed_args.epochs):
         print(f'\n\nEpoch[{epoch + 1}/{passed_args.epochs}]')
 
-        # TODO Progress bar for training
         trainer.train(model, device, train_loader, criterion, optimizer, scheduler, epoch, passed_args.model,
-                      path_to_metric_json,passed_args.batch_size)
+                      path_to_metric_json, passed_args.batch_size)
 
         # TODO not train, validate
         wer_test = trainer.validate(model, device, test_loader, criterion, epoch, passed_args.model,

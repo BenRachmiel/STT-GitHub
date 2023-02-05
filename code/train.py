@@ -3,6 +3,7 @@ import torch.nn.functional as F
 from utils import cer, wer, TextTransform
 import numpy as np
 import json
+from tqdm import tqdm
 
 
 class TrainSTT:
@@ -41,7 +42,10 @@ class TrainSTT:
         model.train()
         running_loss = 0.0
         print(f'\tTRAIN')
-        for batch_idx, data in enumerate(train_loader):
+        for batch_idx, data in tqdm(enumerate(train_loader),
+                                    total=train_loader.iterations,
+                                    bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}',
+                                    colour="white"):
             running_cer = 0.0
             running_wer = 0.0
             spectrograms, labels, input_lengths, label_lengths = data

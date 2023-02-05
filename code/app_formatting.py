@@ -53,27 +53,9 @@ def update_app_layout(app, update_time_seconds=10, model_name='No Model Name Pro
             )
         ]),
 
-        # Div2 - CER
+        # Div2 - WER
         html.Div([
-            html.H2(children='Model CER',
-                    style={'textAlign': 'center',
-                           'color': colors['text'],
-                           'font-family': 'Helvetica',
-                           }
-                    ),
-            html.Div(id='live-update-text-CER'),
-            dcc.Store(id="current-CER"),
-            dcc.Graph(id='live-update-CER'),
-            dcc.Interval(
-                id='interval-component-CER',
-                interval=1 * 1000 * update_time_seconds,  # in milliseconds
-                n_intervals=0
-            )
-        ]),
-
-        # Div3 - WER
-        html.Div([
-            html.H2(children='Model WER',
+            html.H2(children='Model WER & CER',
                     style={'textAlign': 'center',
                            'color': colors['text'],
                            'font-family': 'Helvetica',

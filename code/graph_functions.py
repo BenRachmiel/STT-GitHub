@@ -7,7 +7,7 @@ import graph_formatting
 
 
 def dash_server(filepath, update_time_seconds=10, model_name='No Model Name Provided'):
-    app = dash.Dash(__name__, update_title=None, assets_folder='/stt/code/assets')
+    app = dash.Dash(__name__, update_title=None, assets_folder='../assets')
 
     @app.callback(dash.dependencies.Output('server-time', 'children'),
                   [dash.dependencies.Input('interval-server-time', 'n_intervals')])
@@ -30,20 +30,12 @@ def dash_server(filepath, update_time_seconds=10, model_name='No Model Name Prov
         with open(filepath) as json_file:
             data = json.load(json_file)
 
-        wer_figure = graph_formatting.wer(data)
+        wer_cer_figure = graph_formatting.wer_cer(data)
 
-        return wer_figure
-
-    @app.callback(Output('live-update-CER', 'figure'),
-                  Input('interval-component-CER', 'n_intervals'))
-    def update_graph_live_cer(n):
-        with open(filepath) as json_file:
-            data = json.load(json_file)
-
-        cer_figure = graph_formatting.cer(data)
-
-        return cer_figure
+        return wer_cer_figure
 
     app_formatting.update_app_layout(app, update_time_seconds, model_name)
 
-    app.run(debug=False, host='0.0.0.0')
+    app.run(debug=False,
+            host='0.0.0.0'
+            )

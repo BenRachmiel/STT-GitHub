@@ -443,9 +443,8 @@ def filepath_maker(metric_filepath, model_save_filepath, model):
     """
     now = datetime.datetime.now()
 
-    metric_folder = f'{metric_filepath}/{now.year}_{now.month}_{now.day}/{model}/'
-    if not os.path.exists(metric_folder):
-        os.makedirs(metric_folder)
+    if not os.path.exists(metric_filepath):
+        os.makedirs(metric_filepath)
 
     if not os.path.exists(model_save_filepath):
         os.makedirs(model_save_filepath)

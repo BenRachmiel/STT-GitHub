@@ -39,7 +39,7 @@ def main(passed_args, start_time):
     best_wer = float('inf')
     path_to_metric_json = passed_args.metric_filepath + \
                           f'/{passed_args.model}_run_{start_time.hour}_{start_time.minute}_metrics.json'
-
+    
     for epoch in range(passed_args.epochs):
         print(f'\n\nEpoch[{epoch + 1}/{passed_args.epochs}]')
 
@@ -51,7 +51,7 @@ def main(passed_args, start_time):
                                     path_to_metric_json)
 
         best_wer = metric_best_comparator(wer_test, best_wer, 'WER', model, passed_args.model, num_parameters,
-                                          args.model_save_path)
+                                          args.model_save_filepath)
 
     # TODO, after train and validate, test model on new data
 

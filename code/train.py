@@ -75,6 +75,10 @@ class TrainSTT:
             json_data['Loss'].append(round(float(batch_loss),3))
             json_data['WER'].append(round(running_wer/batch_size,3))
             json_data['CER'].append(round(running_cer/batch_size,3))
+        json_data['Epoch'].pop()
+        json_data['Loss'].pop()
+        json_data['WER'].pop()
+        json_data['CER'].pop()
         with open(filepath, 'w') as fp:
             fp.seek(0)
             json.dump(json_data, fp)

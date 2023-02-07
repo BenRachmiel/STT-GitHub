@@ -7,8 +7,8 @@ def update_app_layout(app, update_time_seconds=10, model_name='No Model Name Pro
         'text': '#808080'
     }
 
-    app.title = 'Sinusoid Testing'
-    # app._favicon =
+    app.title = 'STT Performance Metrics'
+    
     app.layout = html.Div(style={'backgroundColor': colors['background']}, children=[
         html.Div([html.H1(
             children='108 Speech-To-Text Training Metrics, Model: ' + model_name,

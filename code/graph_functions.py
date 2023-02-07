@@ -8,7 +8,7 @@ import graph_formatting
 
 def dash_server(filepath, update_time_seconds=10, model_name='No Model Name Provided'):
     app = dash.Dash(__name__, update_title=None, assets_folder='../assets')
-
+    
     @app.callback(dash.dependencies.Output('server-time', 'children'),
                   [dash.dependencies.Input('interval-server-time', 'n_intervals')])
     def update_timer(_):
@@ -36,6 +36,7 @@ def dash_server(filepath, update_time_seconds=10, model_name='No Model Name Prov
 
     app_formatting.update_app_layout(app, update_time_seconds, model_name)
 
-    app.run(debug=False,
+    app.run(
+            debug=False,
             host='0.0.0.0'
             )

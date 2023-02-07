@@ -14,20 +14,28 @@ def dash_server(filepath, update_time_seconds=10, model_name='No Model Name Prov
     def update_timer(_):
         return datetime.datetime.now().strftime("%c")
 
-    @app.callback(Output('live-update-loss', 'figure'),
-                  Input('interval-component', 'n_intervals'))
-    def update_graph_live_loss(n):
-        with open(filepath) as json_file:
+    @app.callback(
+        Output('live-update-loss', 'figure'),
+        Input('interval-component', 'n_intervals'),
+        Input('dataset', 'value')
+    )
+    def update_graph_live_loss(n, dataset):
+        true_filepath = filepath.replace('.json', f'{dataset}.json')
+        with open(true_filepath) as json_file:
             data = json.load(json_file)
 
         loss_figure = graph_formatting.loss(data)
 
         return loss_figure
 
-    @app.callback(Output('live-update-WER', 'figure'),
-                  Input('interval-component-WER', 'n_intervals'))
-    def update_graph_live_wer(n):
-        with open(filepath) as json_file:
+    @app.callback(
+        Output('live-update-WER', 'figure'),
+        Input('interval-component-WER', 'n_intervals'),
+        Input('dataset', 'value')
+    )
+    def update_graph_live_wer(n, dataset):
+        true_filepath = filepath.replace('.json', f'{dataset}.json')
+        with open(true_filepath) as json_file:
             data = json.load(json_file)
 
         wer_cer_figure = graph_formatting.wer_cer(data)

@@ -36,9 +36,10 @@ class TrainSTT:
               model_type,
               filepath,
               batch_size):
-        
+
         with open(filepath) as json_file:
             json_data = json.load(json_file)
+
         model.train()
         running_loss = 0.0
         print(f'\tTRAIN')
@@ -79,9 +80,12 @@ class TrainSTT:
         json_data['Loss'].pop()
         json_data['WER'].pop()
         json_data['CER'].pop()
+
+        # TODO : move to separate function
         with open(filepath, 'w') as fp:
             fp.seek(0)
             json.dump(json_data, fp)
+
         print(f'\t\ttarget:\t{decoded_targets[-1]}')
         print(f'\t\tprediction:\t{decoded_preds[-1]}')
         return
@@ -125,13 +129,15 @@ class TrainSTT:
         print(f'\t\ttarget:\t{decoded_targets[-1]}')
         print(f'\t\tprediction:\t{decoded_preds[-1]}')
 
-        # for visualization testing, TODO : move to separate function
+        # TODO : move to separate function
         with open(filepath) as json_file:
             data = json.load(json_file)
+
         data['Epoch_valid'].append(epoch+1)
         data['Loss_valid'].append(running_loss / batch_idx)
         data['WER_valid'].append(running_wer / len(test_loader))
         data['CER_valid'].append(running_cer / len(test_loader))
+
         with open(filepath, 'w') as fp:
             fp.seek(0)
             json.dump(data, fp)

@@ -433,12 +433,11 @@ def model_definer(model_name, device):
     return model
 
 
-def filepath_maker(metric_filepath, model_save_filepath, model):
+def filepath_maker(metric_filepath, model_save_filepath):
     """
     Creates directories for saving data if directories do not exist, and returns time @ start of run
     :param metric_filepath: path to folder metrics should be saved in
     :param model_save_filepath: path to folder model parameters should be saved in
-    :param model: string containing name of model
     :return:
     """
     now = datetime.datetime.now()
@@ -451,6 +450,7 @@ def filepath_maker(metric_filepath, model_save_filepath, model):
 
     return now
 
+
 def optimizer_chooser(optimizer_name, model, learning_rate):
     if optimizer_name == 'AdamW':
         optimizer = optim.AdamW(model.parameters(), learning_rate)
@@ -458,3 +458,43 @@ def optimizer_chooser(optimizer_name, model, learning_rate):
         raise Exception("Optimizer name not recognized")
 
     return optimizer
+
+
+def train_on(datasetid,
+             passed_args,
+             input_type,
+             device,
+             model,
+             num_parameters,
+             optimizer,
+             criterion,
+             trainer,
+             path_to_metric_json):
+
+    train_loader, test_loader = get_data(
+        train_json_path=passed_args.train_data_json_path[datasetid],
+        valid_json_path=passed_args.valid_data_json_path[datasetid],
+        batch_size=passed_args.batch_size,
+        input_type=input_type)
+
+    scheduler = optim.lr_scheduler.OneCycleLR(optimizer,
+                                              max_lr=passed_args.learning_rate,
+                                              steps_per_epoch=int(len(train_loader)),
+                                              epochs=passed_args.epochs,
+                                              anneal_strategy='linear')
+
+    best_wer = float('inf')
+
+    true_metric_filepath = path_to_metric_json.replace('.json', f'{datasetid}.json')
+
+    for epoch in range(passed_args.epochs):
+        print(f'\n\nEpoch[{epoch + 1}/{passed_args.epochs}]')
+
+        trainer.train(model, device, train_loader, criterion, optimizer, scheduler, epoch, passed_args.model,
+                      true_metric_filepath, passed_args.batch_size)
+
+        wer_test = trainer.validate(model, device, test_loader, criterion, epoch, passed_args.model,
+                                    true_metric_filepath)
+
+        best_wer = metric_best_comparator(wer_test, best_wer, 'WER', model, passed_args.model, num_parameters,
+                                          passed_args.model_save_filepath)

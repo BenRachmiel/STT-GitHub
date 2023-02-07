@@ -8,15 +8,18 @@ def update_app_layout(app, update_time_seconds=10, model_name='No Model Name Pro
     }
 
     app.title = 'STT Performance Metrics'
-    
+
     app.layout = html.Div(style={'backgroundColor': colors['background']}, children=[
-        html.Div([html.H1(
-            children='108 Speech-To-Text Training Metrics, Model: ' + model_name,
-            style={'textAlign': 'center',
-                   'color': '#FFFFFF',
-                   'font-family': 'Helvetica',
-                   }
-        )]),
+        html.Div([
+            html.H1(
+                children='108 Speech-To-Text Training Metrics, Model: ' + model_name,
+                style={
+                    'textAlign': 'center',
+                    'color': '#FFFFFF',
+                    'font-family': 'Helvetica',
+                }
+            )
+        ]),
         html.Div([
             html.H2(
                 children='Updates every ' + str(update_time_seconds) + ' seconds. Updated last:',
@@ -24,7 +27,7 @@ def update_app_layout(app, update_time_seconds=10, model_name='No Model Name Pro
                     'textAlign': 'center',
                     'color': '#FFFFFF',
                     'font-family': 'Helvetica',
-                           }),
+                }),
             html.H4(
                 '',
                 id='server-time',
@@ -32,9 +35,28 @@ def update_app_layout(app, update_time_seconds=10, model_name='No Model Name Pro
                     'textAlign': 'center',
                     'color': '#FFFFFF',
                     'font-family': 'Helvetica',
-                    }),
+                }),
             dcc.Interval(id='interval-server-time', interval=1 * 1000 * update_time_seconds, n_intervals=0)
-            ]),
+        ]),
+        html.Div(
+            [
+                html.P(children=
+                       "Enter dataset number",
+                       style={
+                           'color': '#FFFFFF'
+                           'margin'
+                       }),
+                html.Br(),
+                dcc.Input(id="dataset",
+                          type="text",
+                          placeholder="0",
+                          ),
+                html.Div(id="output"),
+            ],
+            style={
+                'textAlign': 'center'
+            }
+        ),
         # Loss
         html.Div([
             html.H2(children='Model Loss',

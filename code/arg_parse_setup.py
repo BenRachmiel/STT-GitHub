@@ -47,12 +47,14 @@ def parse_args():
     parser.add_argument(
         "--train-data-json-path",
         metavar="TDJP",
+        nargs='+',
         required=True,
         help="Filepath to training json",
     )
     parser.add_argument(
         "--valid-data-json-path",
         metavar="VDJP",
+        nargs='+',
         required=True,
         help="Filepath to validation json",
     )

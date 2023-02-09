@@ -13,7 +13,6 @@ def option_dict_maker(metric_filepath):
             tokens[4] = '0' + tokens[4]
         working_string = f'{tokens[0]} {tokens[1]}/{tokens[2]}, ' \
                          f'{tokens[3]}:{tokens[4]}, Dataset {tokens[-1]}'
-        print(type(tokens[4]))
         options_list_of_dicts.append(
             {
                 'label': working_string,

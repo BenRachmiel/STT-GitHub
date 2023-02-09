@@ -15,7 +15,8 @@ def main(passed_args, start_time):
 
     if passed_args.load != "False":
         print("Loading model:" + passed_args.load)
-        model.load_state_dict(torch.load(passed_args.load))
+        checkpoint = torch.load(passed_args.load)
+        model.load_state_dict(checkpoint['model_state_dict'])
 
     num_parameters = sum([param.nelement() for param in model.parameters()])
     print(f'Running {passed_args.model} with {num_parameters} parameters')

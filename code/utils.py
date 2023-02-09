@@ -9,6 +9,7 @@ from deepspeech.model import DeepSpeech
 import datetime
 import os
 import torch.optim as optim
+import pytz
 
 
 def _levenshtein_distance(ref, hyp):
@@ -354,7 +355,7 @@ def normalize_int16(signal):
     return signal / 32768.0
 
 
-def get_data(train_json_path, valid_json_path, batch_size, input_type='melspectrogram'):
+def get_data(train_json_path, valid_json_path, batch_size, input_type):
     if input_type == 'melspectrogram':
         train_audio_transforms = nn.Sequential(
             torchaudio.transforms.MelSpectrogram(sample_rate=8000),
@@ -362,8 +363,7 @@ def get_data(train_json_path, valid_json_path, batch_size, input_type='melspectr
             torchaudio.transforms.TimeMasking(time_mask_param=35)
         )
         valid_audio_transforms = torchaudio.transforms.MelSpectrogram(sample_rate=8000)
-
-    if input_type == 'MFCC':
+    elif input_type == 'MFCC':
         train_audio_transforms = nn.Sequential(
             torchaudio.transforms.MFCC(
                 sample_rate=8000,
@@ -377,6 +377,8 @@ def get_data(train_json_path, valid_json_path, batch_size, input_type='melspectr
             n_mfcc=128,
             dct_type=2
         )
+    else:
+        raise Exception("Invalid input type")
 
     train_loader = STTDataLoader(train_json_path, batch_size, train_audio_transforms, shuffle=True)
     test_loader = STTDataLoader(valid_json_path, batch_size, valid_audio_transforms, shuffle=True)
@@ -384,11 +386,11 @@ def get_data(train_json_path, valid_json_path, batch_size, input_type='melspectr
 
 
 def input_type_generator(model):
-    input_type = 'ERROR'
-    if model == 'Wav2Letter':
-        input_type = 'MFCC'
-    if model == 'DeepSpeech':
-        input_type = 'melspectrogram'
+    input_type_table = {
+        'Wav2Letter': 'MFCC',
+        'DeepSpeech': 'melspectrogram'
+    }
+    input_type = input_type_table.get(model)
     return input_type
 
 
@@ -440,13 +442,9 @@ def filepath_maker(metric_filepath, model_save_filepath):
     :param model_save_filepath: path to folder model parameters should be saved in
     :return:
     """
-    now = datetime.datetime.now()
-
-    if not os.path.exists(metric_filepath):
-        os.makedirs(metric_filepath)
-
-    if not os.path.exists(model_save_filepath):
-        os.makedirs(model_save_filepath)
+    now = pytz.timezone('Asia/Jerusalem').localize(datetime.datetime.now())
+    os.makedirs(metric_filepath) if not os.path.exists(metric_filepath) else None
+    os.makedirs(model_save_filepath) if not os.path.exists(model_save_filepath) else None
 
     return now
 
@@ -455,13 +453,21 @@ def optimizer_chooser(optimizer_name, model, learning_rate):
     if optimizer_name == 'AdamW':
         optimizer = optim.AdamW(model.parameters(), learning_rate)
     else:
-        raise Exception("Optimizer name not recognized")
+        raise Exception("Optimizer name not recognized, try AdamW.")
 
     return optimizer
 
 
-def train_on(datasetid,
-             passed_args,
+def criterion_chooser(criterion_name, device):
+    if criterion_name == 'CTC':
+        criterion = nn.CTCLoss(blank=29).to(device)
+    else:
+        raise Exception("Criterion name not recognized, try CTC.")
+
+    return criterion
+
+
+def train_on(passed_args,
              input_type,
              device,
              model,
@@ -469,11 +475,11 @@ def train_on(datasetid,
              optimizer,
              criterion,
              trainer,
-             path_to_metric_json):
-
+             path_to_metric_json,
+             datasetid=0):
     train_loader, test_loader = get_data(
-        train_json_path=passed_args.train_data_json_path[datasetid],
-        valid_json_path=passed_args.valid_data_json_path[datasetid],
+        train_json_path=passed_args.tdjp[datasetid],
+        valid_json_path=passed_args.vdjp[datasetid],
         batch_size=passed_args.batch_size,
         input_type=input_type)
 
@@ -485,7 +491,7 @@ def train_on(datasetid,
 
     best_wer = float('inf')
 
-    true_metric_filepath = path_to_metric_json.replace('.json', f'{datasetid}.json')
+    true_metric_filepath = path_to_metric_json.replace('.json', f'_id_{datasetid}.json')
 
     for epoch in range(passed_args.epochs):
         print(f'\n\nEpoch[{epoch + 1}/{passed_args.epochs}]')
@@ -498,3 +504,11 @@ def train_on(datasetid,
 
         best_wer = metric_best_comparator(wer_test, best_wer, 'WER', model, passed_args.model, num_parameters,
                                           passed_args.model_save_filepath)
+
+
+def file_lister(search_dir):
+    os.chdir(search_dir)
+    files = filter(os.path.isfile, os.listdir(search_dir))
+    files = [os.path.join(search_dir, f) for f in files]  # add path to each file
+    files.sort(key=lambda x: os.path.getmtime(x))
+    return files

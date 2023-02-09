@@ -1,7 +1,5 @@
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from utils import input_type_generator, model_definer, filepath_maker, train_on
+from utils import input_type_generator, model_definer, filepath_maker, train_on, optimizer_chooser, criterion_chooser
 from train import TrainSTT
 import arg_parse_setup
 from start_visualization_server import start_visualization, initialize_new_data_json
@@ -13,23 +11,26 @@ def main(passed_args, start_time):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # TODO, for later, model loading + displaying prev data from model
     model = model_definer(passed_args.model, device)
+
+    if passed_args.load != "False":
+        print("Loading model:" + passed_args.load)
+        model.load_state_dict(torch.load(passed_args.load))
 
     num_parameters = sum([param.nelement() for param in model.parameters()])
     print(f'Running {passed_args.model} with {num_parameters} parameters')
 
-    # TODO optimizer and criterion in argparse
-    optimizer = optim.AdamW(model.parameters(), passed_args.learning_rate)
-    criterion = nn.CTCLoss(blank=29).to(device)
+    optimizer = optimizer_chooser(passed_args.optimizer, model, passed_args.learning_rate)
+    criterion = criterion_chooser(passed_args.criterion, device)
 
     trainer = TrainSTT()
 
-    path_to_metric_json = passed_args.metric_filepath \
-                          + f'/{passed_args.model}_run_{start_time.hour}_{start_time.minute}_metrics.json'
+    path_to_metric_json = passed_args.metric_filepath + f'/{args.model}_{start_time.month}_{start_time.day}' \
+                                                        f'_{start_time.hour}_{start_time.minute}.json'
 
-    train_on(0, passed_args, input_type, device, model, num_parameters, optimizer, criterion, trainer,
-             path_to_metric_json)
+    for dataset_num in range(len(args.tdjp)):
+        train_on(passed_args, input_type, device, model, num_parameters, optimizer, criterion, trainer,
+                 path_to_metric_json, datasetid=dataset_num)
 
 
 if __name__ == '__main__':
@@ -38,13 +39,12 @@ if __name__ == '__main__':
 
     now = filepath_maker(args.metric_filepath, args.model_save_filepath)
 
-    for datasetid in range(len(args.train_data_json_path)):
-        initialize_new_data_json(args.metric_filepath + f'/{args.model}_run_{now.hour}_{now.minute}_metrics.json',
+    # reversed range such that file with dataset ID 0 will be created last, dropdown list sorted by update date
+    for datasetid in reversed(range(len(args.tdjp))):
+        initialize_new_data_json(args.metric_filepath + f'/{args.model}_{now.month}_'
+                                                        f'{now.day}_{now.hour}_{now.minute}.json',
                                  datasetid)
 
-    start_visualization(
-        filepath=args.metric_filepath + f'/{args.model}_run_{now.hour}_{now.minute}_metrics.json',
-        model_name=args.model
-    )
+    start_visualization(args, model_name=args.model)
 
     main(args, now)

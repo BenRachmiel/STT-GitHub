@@ -1,5 +1,5 @@
 import torch
-import torch.nn.functional as F
+import torch.nn.functional as f
 from utils import cer, wer, TextTransform
 import numpy as np
 import json
@@ -44,7 +44,7 @@ class TrainSTT:
         running_loss = 0.0
         print(f'\tTRAIN')
         for batch_idx, data in tqdm(enumerate(train_loader),
-                                    total=train_loader.iterations,
+                                    total=train_loader.iterations + 1,
                                     bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}',
                                     colour="white"):
             running_cer = 0.0
@@ -56,7 +56,7 @@ class TrainSTT:
             if model_type == 'Wav2Letter':
                 spectrograms = np.squeeze(spectrograms, axis=1)
             output = model(spectrograms)  # (batch, time, n_class)
-            output = F.log_softmax(output, dim=2)
+            output = f.log_softmax(output, dim=2)
             output = output.transpose(0, 1)  # (time, batch, n_class)
             if model_type == 'Wav2Letter':
                 output = output.transpose(0, 2)
@@ -72,16 +72,15 @@ class TrainSTT:
             for j in range(len(decoded_preds)):
                 running_cer += cer(decoded_targets[j], decoded_preds[j])
                 running_wer += wer(decoded_targets[j], decoded_preds[j])
-            json_data['Epoch'].append(round(float(epoch)+(float(batch_idx*batch_size)/len(train_loader)),3))
-            json_data['Loss'].append(round(float(batch_loss),3))
-            json_data['WER'].append(round(running_wer/batch_size,3))
-            json_data['CER'].append(round(running_cer/batch_size,3))
+            json_data['Epoch'].append(round(float(epoch)+(float(batch_idx*batch_size)/len(train_loader)), 3))
+            json_data['Loss'].append(round(float(batch_loss), 3))
+            json_data['WER'].append(round(running_wer/batch_size, 3))
+            json_data['CER'].append(round(running_cer/batch_size, 3))
         json_data['Epoch'].pop()
         json_data['Loss'].pop()
         json_data['WER'].pop()
         json_data['CER'].pop()
 
-        # TODO : move to separate function
         with open(filepath, 'w') as fp:
             fp.seek(0)
             json.dump(json_data, fp)
@@ -114,7 +113,7 @@ class TrainSTT:
                     spectrograms = np.squeeze(spectrograms, axis=1)
 
                 output = model(spectrograms)  # (batch, time, n_class)
-                output = F.log_softmax(output, dim=2)
+                output = f.log_softmax(output, dim=2)
                 output = output.transpose(0, 1)  # (time, batch, n_class)
                 if model_type == 'Wav2Letter':
                     output = output.transpose(0, 2)

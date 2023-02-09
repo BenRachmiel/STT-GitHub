@@ -12,6 +12,20 @@ def parse_args():
         default="DeepSpeech",
     )
     parser.add_argument(
+        "--optimizer",
+        metavar="O",
+        choices=["AdamW"],
+        help="Input type of optimizer",
+        default="AdamW",
+    )
+    parser.add_argument(
+        "--criterion",
+        metavar="C",
+        choices=["CTC"],
+        help="Input type of optimizer",
+        default="CTC",
+    )
+    parser.add_argument(
         "--learning-rate",
         default=5e-4,
         type=float,
@@ -45,18 +59,25 @@ def parse_args():
         help="Folder in which models are to be saved",
     )
     parser.add_argument(
-        "--train-data-json-path",
-        metavar="TDJP",
+        "--tdjp",
+        metavar="Train Data JSON Path",
         nargs='+',
         required=True,
-        help="Filepath to training json",
+        help="Filepath to training jsons",
     )
     parser.add_argument(
-        "--valid-data-json-path",
-        metavar="VDJP",
+        "--vdjp",
+        metavar="Valid Data JSON Path",
         nargs='+',
         required=True,
-        help="Filepath to validation json",
+        help="Filepath to validation jsons",
+    )
+    parser.add_argument(
+        "--load",
+        metavar="L",
+        default="False",
+        type=str,
+        help="Path to state dict of previously trained model to load, default starts new model from scratch."
     )
 
     return parser.parse_args()

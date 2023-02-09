@@ -6,7 +6,7 @@ import app_formatting
 import graph_formatting
 
 
-def dash_server(filepath, update_time_seconds=10, model_name='No Model Name Provided'):
+def dash_server(args, update_time_seconds=10, model_name='No Model Name Provided'):
     app = dash.Dash(__name__, update_title=None, assets_folder='../assets')
     
     @app.callback(dash.dependencies.Output('server-time', 'children'),
@@ -17,11 +17,10 @@ def dash_server(filepath, update_time_seconds=10, model_name='No Model Name Prov
     @app.callback(
         Output('live-update-loss', 'figure'),
         Input('interval-component', 'n_intervals'),
-        Input('dataset', 'value')
+        Input('data-path', 'value')
     )
-    def update_graph_live_loss(n, dataset):
-        true_filepath = filepath.replace('.json', f'{dataset}.json')
-        with open(true_filepath) as json_file:
+    def update_graph_live_loss(n, data_path):
+        with open(data_path) as json_file:
             data = json.load(json_file)
 
         loss_figure = graph_formatting.loss(data)
@@ -31,18 +30,17 @@ def dash_server(filepath, update_time_seconds=10, model_name='No Model Name Prov
     @app.callback(
         Output('live-update-WER', 'figure'),
         Input('interval-component-WER', 'n_intervals'),
-        Input('dataset', 'value')
+        Input('data-path', 'value')
     )
-    def update_graph_live_wer(n, dataset):
-        true_filepath = filepath.replace('.json', f'{dataset}.json')
-        with open(true_filepath) as json_file:
+    def update_graph_live_wer(n, data_path):
+        with open(data_path) as json_file:
             data = json.load(json_file)
 
         wer_cer_figure = graph_formatting.wer_cer(data)
 
         return wer_cer_figure
 
-    app_formatting.update_app_layout(app, update_time_seconds, model_name)
+    app_formatting.update_app_layout(app, args, update_time_seconds, model_name)
 
     app.run(
             debug=False,

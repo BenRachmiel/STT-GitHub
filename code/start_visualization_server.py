@@ -14,12 +14,12 @@ def initialize_new_data_json(filepath, datasetid):
         'Loss': [],
         'Loss_valid': []
     }
-    true_filepath = filepath.replace('.json', f'{datasetid}.json')
+    true_filepath = filepath.replace('.json', f'_id_{datasetid}.json')
     with open(true_filepath, 'w') as fp:
         fp.seek(0)
         json.dump(data, fp)
 
 
-def start_visualization(filepath, update_time_seconds=10, model_name='No Model Name Provided'):
-    server_process = mp.Process(target=gf.dash_server, args=(filepath, update_time_seconds, model_name))
+def start_visualization(passed_args, update_time_seconds=10, model_name='No Model Name Provided'):
+    server_process = mp.Process(target=gf.dash_server, args=(passed_args, update_time_seconds, model_name))
     server_process.start()

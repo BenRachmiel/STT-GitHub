@@ -1,11 +1,35 @@
 from dash import dcc, html
+from utils import file_lister
+import re
 
 
-def update_app_layout(app, update_time_seconds=10, model_name='No Model Name Provided'):
+def option_dict_maker(metric_filepath):
+    options_list_of_dicts = []
+    path_list = file_lister(metric_filepath)[::-1]
+    for path in path_list:
+        working_string = re.split("[/.]", path)[-2]
+        tokens = working_string.split("_")
+        if len(tokens[4]) == 1:
+            tokens[4] = '0' + tokens[4]
+        working_string = f'{tokens[0]} {tokens[1]}/{tokens[2]}, ' \
+                         f'{tokens[3]}:{tokens[4]}, Dataset {tokens[-1]}'
+        print(type(tokens[4]))
+        options_list_of_dicts.append(
+            {
+                'label': working_string,
+                'value': path
+            })
+
+    return options_list_of_dicts
+
+
+def update_app_layout(app, args, update_time_seconds=10, model_name='No Model Name Provided'):
     colors = {
         'background': '#111111',
         'text': '#808080'
     }
+
+    options_list_of_dicts = option_dict_maker(args.metric_filepath)
 
     app.title = 'STT Performance Metrics'
 
@@ -40,21 +64,17 @@ def update_app_layout(app, update_time_seconds=10, model_name='No Model Name Pro
         ]),
         html.Div(
             [
-                html.P(children=
-                       "Enter dataset number",
-                       style={
-                           'color': '#FFFFFF'
-                           'margin'
-                       }),
-                html.Br(),
-                dcc.Input(id="dataset",
-                          type="text",
-                          placeholder="0",
-                          ),
+                html.P(children="Select dataset ID", style={'color': '#FFFFFF'}),
+                dcc.Dropdown(
+                    options=options_list_of_dicts,
+                    value=file_lister(args.metric_filepath)[-1],
+                    id="data-path",
+                    clearable=False
+                ),
                 html.Div(id="output"),
             ],
             style={
-                'textAlign': 'center'
+                'width': '20%'
             }
         ),
         # Loss

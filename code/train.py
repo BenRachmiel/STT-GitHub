@@ -53,12 +53,12 @@ class TrainSTT:
             spectrograms, labels = spectrograms.to(device), labels.to(device)
 
             optimizer.zero_grad()
-            if model_type == 'Wav2Letter':
+            if model_type != 'DeepSpeech':
                 spectrograms = np.squeeze(spectrograms, axis=1)
             output = model(spectrograms)  # (batch, time, n_class)
             output = f.log_softmax(output, dim=2)
             output = output.transpose(0, 1)  # (time, batch, n_class)
-            if model_type == 'Wav2Letter':
+            if model_type != 'DeepSpeech':
                 output = output.transpose(0, 2)
 
             loss = criterion(output, labels, input_lengths, label_lengths)

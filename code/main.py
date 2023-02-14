@@ -11,12 +11,7 @@ def main(passed_args, start_time):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = model_definer(passed_args.model, device)
-
-    if passed_args.load != "False":
-        print("Loading model:" + passed_args.load)
-        checkpoint = torch.load(passed_args.load)
-        model.load_state_dict(checkpoint['model_state_dict'])
+    model = model_definer(passed_args.model, device, passed_args.load)
 
     num_parameters = sum([param.nelement() for param in model.parameters()])
     print(f'Running {passed_args.model} with {num_parameters} parameters')

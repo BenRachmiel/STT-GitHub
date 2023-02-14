@@ -7,7 +7,7 @@ def parse_args():
     parser.add_argument(
         "--model",
         metavar="M",
-        choices=["DeepSpeech", "Wav2Letter"],
+        choices=["DeepSpeech", "Wav2Letter", "Wav2vec2"],
         help="Input type of model",
         default="DeepSpeech",
     )

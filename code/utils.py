@@ -10,6 +10,10 @@ import datetime
 import os
 import torch.optim as optim
 import pytz
+from dataclasses import dataclass
+from typing import Any, Dict, Tuple
+from torchaudio._internal import load_state_dict_from_url
+from torchaudio.models import wav2vec2_model, Wav2Vec2Model
 
 
 def _levenshtein_distance(ref, hyp):
@@ -230,12 +234,10 @@ class STTDataLoader:
             raise StopIteration
 
     def __iter__(self):
-        # here for 'formality'
         return self
 
     def _read_content(self, json_path):
         def is_remove_file(line):
-            # checking for bad data, i.e. duration out of range, text empty
             line_dict = json.loads(line)
             if line_dict['duration'] >= self.max_duration or line_dict['duration'] < self.min_duration:
                 return True
@@ -377,6 +379,15 @@ def get_data(train_json_path, valid_json_path, batch_size, input_type):
             n_mfcc=128,
             dct_type=2
         )
+    elif input_type == 'waveform':
+        train_audio_transforms = nn.Sequential(
+            torchaudio.transforms.Resample(orig_freq=8000, new_freq=16000),
+            torchaudio.transforms.Spectrogram(power=2),
+            torchaudio.transforms.FrequencyMasking(freq_mask_param=15),
+            torchaudio.transforms.TimeMasking(time_mask_param=35),
+            torchaudio.transforms.GriffinLim()
+        )
+        valid_audio_transforms = torchaudio.transforms.Resample(orig_freq=8000, new_freq=16000)
     else:
         raise Exception("Invalid input type")
 
@@ -388,7 +399,8 @@ def get_data(train_json_path, valid_json_path, batch_size, input_type):
 def input_type_generator(model):
     input_type_table = {
         'Wav2Letter': 'MFCC',
-        'DeepSpeech': 'melspectrogram'
+        'DeepSpeech': 'melspectrogram',
+        'Wav2vec2': 'waveform'
     }
     input_type = input_type_table.get(model)
     return input_type
@@ -416,7 +428,7 @@ def metric_best_comparator(current_metric, best_metric, metric_name, model,
         return best_metric
 
 
-def model_definer(model_name, device):
+def model_definer(model_name, device, state_dict_path = 'False'):
     if model_name == 'DeepSpeech':
         model = DeepSpeech(
             n_cnn_layers=3,
@@ -429,8 +441,41 @@ def model_definer(model_name, device):
         ).to(device)
     elif model_name == 'Wav2Letter':
         model = torchaudio.models.Wav2Letter(input_type='mfcc', num_features=128, num_classes=30).to(device)
+    elif model_name == 'Wav2vec2':
+        model = wav2vec2_model(**{
+                "extractor_mode": "layer_norm",
+                "extractor_conv_layer_config": [
+                    (512, 10, 5),
+                    (512, 3, 2),
+                    (512, 3, 2),
+                    (512, 3, 2),
+                    (512, 3, 2),
+                    (512, 2, 2),
+                    (512, 2, 2),
+                ],
+                "extractor_conv_bias": True,
+                "encoder_embed_dim": 1024,
+                "encoder_projection_dropout": 0.0,
+                "encoder_pos_conv_kernel": 128,
+                "encoder_pos_conv_groups": 16,
+                "encoder_num_layers": 24,
+                "encoder_num_heads": 16,
+                "encoder_attention_dropout": 0.0,
+                "encoder_ff_interm_features": 4096,
+                "encoder_ff_interm_dropout": 0.0,
+                "encoder_dropout": 0.0,
+                "encoder_layer_norm_first": True,
+                "encoder_layer_drop": 0.0,
+                "aux_num_out": None,
+            }
+        ).to(device)
     else:
         raise Exception("Model name not recognized")
+
+    if state_dict_path != "False":
+        print("Loading model:" + state_dict_path)
+        checkpoint = torch.load(state_dict_path)
+        model.load_state_dict(checkpoint['model_state_dict'])
 
     return model
 
